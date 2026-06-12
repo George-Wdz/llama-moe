@@ -3,7 +3,7 @@
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_dir = "llama-moe/LLaMA-MoE-v1-3_5B-2_8"
+model_dir = "/home/wdz/BT/MoE/models/LLaMA-MoE-v1-3_5B-2_8"
 tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
 model = AutoModelForCausalLM.from_pretrained(
     model_dir, torch_dtype=torch.bfloat16, trust_remote_code=True

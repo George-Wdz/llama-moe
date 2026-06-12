@@ -32,7 +32,7 @@ class MoEMlpOutput(ModelOutput):
     gate_importance: Optional[list] = None
 
 
-class BaseMoELayer(nn.Module):
+class BaseMoELayer(nn.Module): #所有MoE层的基类，定义了gate和calculator的接口，以及一些公共方法
     def __init__(self):
         super(BaseMoELayer, self).__init__()
 
@@ -43,10 +43,10 @@ class BaseMoELayer(nn.Module):
             RandomLearnableGate,
             TopKBalancedNoisyGate,
             SwitchBalancedGate,
-        ]
+        ]   # 门控网络，决定选择哪些专家以及每个专家的权重
         self.calculator: Union[
             UniformCalculator, UniversalCalculator, SwitchDropTokenCalculator
-        ]
+        ]   # 计算器，根据gate的输出计算专家的加权输出
 
     def _create_gate(self, **kwargs):
         self.gate_type = kwargs.get("gate_type", "TopKBalancedNoisyGate")
@@ -136,7 +136,7 @@ class BaseMoELayer(nn.Module):
         else:
             raise NotImplementedError
 
-    def forward(self, x) -> MoEMlpOutput:
+    def forward(self, x) -> MoEMlpOutput: #前馈
         original_shape = x.shape[:-1]
         x = x.reshape(-1, self.input_size)
         # shape(batch_size*seq_len, input_size)
@@ -243,7 +243,7 @@ class BaseMoELayer(nn.Module):
     # fmt: on
 
 
-class LinearMoELayer(BaseMoELayer):
+class LinearMoELayer(BaseMoELayer): 
     def __init__(
         self, input_size, output_size, num_experts, num_selects, bias=True, **kwargs
     ):
@@ -268,24 +268,24 @@ class LinearMoELayer(BaseMoELayer):
         # fmt: on
 
 
-class LinearGLUMoELayer(BaseMoELayer):
+class LinearGLUMoELayer(BaseMoELayer): #LLaMA-MoE中使用的MoE层，输入输出都是线性的，专家是线性层，替代原始LlamaFFN
     def __init__(
         self,
-        input_size,
-        hidden_size,
-        output_size,
-        hidden_act,
-        num_experts,
-        num_selects,
-        size_experts=None,
-        bias=True,
+        input_size,             #输入维度
+        hidden_size,            #隐藏维度，专家内部的维度
+        output_size,            #输出维度
+        hidden_act,             #专家内部的激活函数
+        num_experts,            #专家数量
+        num_selects,            #每个token选择的专家数量
+        size_experts=None,      #专家的大小，默认为None，即每个专家的大小为hidden_size
+        bias=True,              #是否使用偏置
         **kwargs,
     ):
         # fmt: off
         super(LinearGLUMoELayer, self).__init__()
         assert (num_selects <= num_experts)  # 选择数量大于专家数量，报错
-        self.input_size = input_size
-        self.hidden_size = hidden_size
+        self.input_size = input_size         
+        self.hidden_size = hidden_size       
         self.output_size = output_size
         self.hidden_act = hidden_act
         self.num_experts = num_experts
